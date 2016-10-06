@@ -32,7 +32,7 @@ var $TOC_pagenumstyle;	// mPDF 6
 var $TOC_suppress;	// mPDF 6
 var $m_TOC; 
 
-function __construct(&$mpdf) {
+function tocontents(&$mpdf) {
 	$this->mpdf = $mpdf;
 	$this->_toc=array();
 	$this->TOCmark = 0;
@@ -255,23 +255,138 @@ function insertTOC() {
 
 
 		// mPDF 5.6.19
-		$html ='<div class="mpdf_toc" id="mpdf_toc_'.$toc_id.'">';
-		foreach($this->_toc as $t) {
-		 if ($t['toc_id']==='_mpdf_all' || $t['toc_id']===$toc_id ) {
-			$html .= '<div class="mpdf_toc_level_'.$t['l'].'">';
-			if ($TOCuseLinking) { $html .= '<a class="mpdf_toc_a" href="#__mpdfinternallink_'.$t['link'].'">'; }
-			$html .= '<span class="mpdf_toc_t_level_'.$t['l'].'">'.$t['t'].'</span>';
-			if ($TOCuseLinking) { $html .= '</a>'; }
-			if (!$tocoutdent) { $tocoutdent = '0'; }
-			if ($TOCusePaging) { $html .= ' <dottab outdent="'.$tocoutdent.'" /> ';
-				if ($TOCuseLinking) { $html .= '<a class="mpdf_toc_a" href="#__mpdfinternallink_'.$t['link'].'">'; }
-				$html .= '<span class="mpdf_toc_p_level_'.$t['l'].'">'.$this->mpdf->docPageNum($t['p']).'</span>';
-				if ($TOCuseLinking) { $html .= '</a>'; }
-			}
-			$html .= '</div>';
-		 } 
-		}
-		$html .= '</div>';
+        // Fixed block
+        if (!empty($this->mpdf->page_box['current']) && $this->mpdf->page_box['current'] == 'toc-disease') {
+                        $listPage1 = [];
+            $listDis = [];
+            $listPage2 = [];
+            $flag = false;
+            foreach($this->_toc as $t) {
+                if ($t['l'] == 1) {
+                    $listDis[] = $t;
+                    $flag = true;
+                } elseif($flag) {
+                    $listPage2[] = $t;
+                } else {
+                    $listPage1[] = $t;
+                }
+            }
+
+            $html = '<div id="content-title"><div class="box">';
+            
+            if (!empty($listPage1)) {
+                $html .= '
+                    <div class="row">
+                        <div class="box-6">
+                            <table class="table-content">
+                            ';
+                foreach($listPage1 as $t) {
+                    $html .= '
+                        <tr>
+                            <td align="right"><h2 class="hl-h2">'.$t['t'].'</h2></td>
+                            <td class="num">'.$t['p'].'</td>
+                        </tr>';
+                }
+                $html .= '
+                        </table>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>';
+            }
+            
+            if (!empty($listDis)) {
+                $html .= '
+                    <div class="row">
+                            ';
+                $m = count($listDis) % 3;
+                $n = (count($listDis) - $m) / 3;
+
+
+                $list = [];
+                $j = 0;
+                for ($i = 1; $i <= 3; $i++) {
+                    if (empty($listDis[$i])) continue;
+
+                    // если M>0, то добавляем к откусаному еще один элемент и делаем M-- ;
+                    if ($m > 0) {
+                        $n = $n + 1;
+                        $m--;
+                    }
+                    $list[] = array_slice($listDis, $j, $n);
+                    $j = $j + $n;
+                }
+
+                foreach($list as $key => $chunk) {
+                    $html .= '<div class="box3 ';
+                    if ($key == 0) $html .= 'box-offset-3';
+                    $html .= '">
+                            <table class="table-list-risk">
+                                ';
+                    foreach($chunk as $t) {
+                        $html .= '
+                            <tr>
+                                <td>&bull;</td>
+                                <td class="name">'.$t['t'].'</td>
+                                <td class="num">'.$t['p'].'</td>
+                            </tr>';
+                    }
+                    $html .= '
+                        </table>
+                    </div>';
+                }
+                $html .= '
+                    <div class="clearfix"></div>
+                </div>';
+            }
+
+            if (!empty($listPage2)) {
+                $html .= '
+                    <div class="row">
+                        <div class="box-6">
+                            <table class="table-content">
+                            ';
+                foreach($listPage2 as $t) {
+                    $html .= '
+                        <tr>
+                            <td align="right"><h2 class="hl-h2">'.$t['t'].'</h2></td>
+                            <td class="num">'.$t['p'].'</td>
+                        </tr>';
+                }
+                $html .= '
+                        </table>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>';
+            }
+
+            $html .= '</div></div>';
+        } else {
+            $html ='<div class="mpdf_toc" id="mpdf_toc_'.$toc_id.'">';
+            foreach($this->_toc as $t) {
+             if ($t['toc_id']==='_mpdf_all' || $t['toc_id']===$toc_id ) {
+                $html .= '<div class="mpdf_toc_level_'.$t['l'].'">';
+                if ($TOCuseLinking) { $html .= '<a class="mpdf_toc_a" href="#__mpdfinternallink_'.$t['link'].'">'; }
+                $html .= '<span class="mpdf_toc_t_level_'.$t['l'].'">'.$t['t'].'</span>';
+                if ($TOCuseLinking) { $html .= '</a>'; }
+                if (!$tocoutdent) { $tocoutdent = '0'; }
+                if ($TOCusePaging) { $html .= ' <dottab outdent="'.$tocoutdent.'" /> ';
+                    if ($TOCuseLinking) { $html .= '<a class="mpdf_toc_a" href="#__mpdfinternallink_'.$t['link'].'">'; }
+                    $html .= '<span class="mpdf_toc_p_level_'.$t['l'].'">'.$this->mpdf->docPageNum($t['p']).'</span>';
+                    if ($TOCuseLinking) { $html .= '</a>'; }
+                }
+                $html .= '</div>';
+             } 
+            }
+            $html .= '</div>';
+        }
+/*
+$html2 = str_replace(['<', '>'], ['&lt;', '&gt;'], $html);
+var_dump($html2);
+print '<br>';
+print '<br>';
+print $html;
+die();
+*/
 		$this->mpdf->WriteHTML($html);
 
 		if (isset($toc_postHTML) && $toc_postHTML) { $this->mpdf->WriteHTML($toc_postHTML); }
