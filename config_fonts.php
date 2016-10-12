@@ -297,9 +297,16 @@ $this->fontdata = array(
 		'R' => "UnBatang_0613.ttf",
 		),
 
+/* ALS Story */
+
+    "alsstory-regular" => array(
+        'R' => "ALSStoryRegular.ttf"
+    ),
+    "alsstory-bold" => array(
+        'B' => "ALSStoryBold.ttf"
+    ),
 
 );
-
 
 // Add fonts to this array if they contain characters in the SIP or SMP Unicode planes
 // but you do not require them. This allows a more efficient form of subsetting to be used.
